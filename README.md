@@ -1,6 +1,6 @@
 # SSProxy
 
-A simple, chainable HTTP proxy with multithreading support, written in Python.
+A simple, stupid, chainable HTTP proxy with multithreading support, written in Python.
 
 ## Features
 
