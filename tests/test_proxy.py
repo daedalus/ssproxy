@@ -83,12 +83,7 @@ class TestConfig:
         from proxy.config import UpstreamProxy, UpstreamAuth
 
         auth = UpstreamAuth(username="user", password="pass")
-        upstream = UpstreamProxy(
-            enabled=True,
-            host="proxy.example.com",
-            port=8080,
-            auth=auth
-        )
+        upstream = UpstreamProxy(enabled=True, host="proxy.example.com", port=8080, auth=auth)
 
         assert upstream.enabled is True
         assert upstream.host == "proxy.example.com"
@@ -134,24 +129,20 @@ class TestProxyHandler:
     def test_basic_http_request(self, proxy_server, mock_server):
         client = socket.socket()
         client.connect(("127.0.0.1", 19999))
-        
-        request = (
-            b"GET http://127.0.0.1:18888/test HTTP/1.1\r\n"
-            b"Host: 127.0.0.1:18888\r\n"
-            b"\r\n"
-        )
+
+        request = b"GET http://127.0.0.1:18888/test HTTP/1.1\r\nHost: 127.0.0.1:18888\r\n\r\n"
         client.sendall(request)
-        
+
         response = client.recv(4096)
         client.close()
-        
+
         assert b"200 OK" in response
         assert b"Hello Proxy" in response
 
     def test_http_request_with_body(self, proxy_server, mock_server):
         client = socket.socket()
         client.connect(("127.0.0.1", 19999))
-        
+
         request = (
             b"POST http://127.0.0.1:18888/data HTTP/1.1\r\n"
             b"Host: 127.0.0.1:18888\r\n"
@@ -160,10 +151,10 @@ class TestProxyHandler:
             b"Hello World"
         )
         client.sendall(request)
-        
+
         response = client.recv(4096)
         client.close()
-        
+
         assert b"200 OK" in response
 
     def test_proxy_returns_502_on_connection_failure(self):
@@ -188,18 +179,14 @@ class TestProxyHandler:
         try:
             client = socket.socket()
             client.connect(("127.0.0.1", 19998))
-            
-            request = (
-                b"GET http://example.com/ HTTP/1.1\r\n"
-                b"Host: example.com\r\n"
-                b"\r\n"
-            )
+
+            request = b"GET http://example.com/ HTTP/1.1\r\nHost: example.com\r\n\r\n"
             client.settimeout(5)
             client.sendall(request)
-            
+
             response = client.recv(4096)
             client.close()
-            
+
             assert b"502" in response
         finally:
             server.running = False
@@ -212,7 +199,7 @@ class TestLogging:
 
         logger = ColoredLogger(enabled=True, colorful=True)
         logger.info("Test message")
-        
+
         captured = capsys.readouterr()
         assert "INFO" in captured.out
         assert "Test message" in captured.out
@@ -222,7 +209,7 @@ class TestLogging:
 
         logger = ColoredLogger(enabled=False)
         logger.info("Should not appear")
-        
+
         captured = capsys.readouterr()
         assert captured.out == ""
 
@@ -231,7 +218,7 @@ class TestLogging:
 
         logger = ColoredLogger(enabled=True, colorful=False)
         logger.info("Plain message")
-        
+
         captured = capsys.readouterr()
         assert "INFO" in captured.out
         assert "Plain message" in captured.out
@@ -241,10 +228,10 @@ class TestLogging:
         from proxy.__main__ import create_parser
 
         parser = create_parser()
-        
+
         with pytest.raises(SystemExit) as excinfo:
             parser.parse_args(["--help"])
-        
+
         assert excinfo.value.code == 0
 
     def test_cli_port_override(self):
@@ -263,20 +250,19 @@ class TestLogging:
             max_connections=None,
             plain=False,
             quiet=False,
-            debug=False
+            debug=False,
         )
-        
+
         config = apply_cli_overrides(config, args)
-        
+
         assert config.port == 8888
 
     def test_cli_upstream_format(self):
-        import argparse
         from proxy.__main__ import create_parser
 
         parser = create_parser()
         args = parser.parse_args(["--upstream", "proxy.example.com:8080"])
-        
+
         assert args.upstream == "proxy.example.com:8080"
 
 
@@ -295,10 +281,10 @@ class TestProxyServer:
         server = ProxyServer(config)
         thread = threading.Thread(target=server.start)
         thread.start()
-        
+
         time.sleep(0.3)
         assert server.running is True
-        
+
         server.running = False
         thread.join(timeout=2)
         assert server.running is False
@@ -317,19 +303,19 @@ class TestProxyServer:
         server = ProxyServer(config)
         thread = threading.Thread(target=server.start)
         thread.start()
-        
+
         time.sleep(0.3)
-        
+
         test_socket = socket.socket()
         try:
             test_socket.connect(("127.0.0.1", 19996))
             connected = True
-        except:
+        except Exception:
             connected = False
         finally:
             test_socket.close()
-        
+
         server.running = False
         thread.join(timeout=2)
-        
+
         assert connected is True

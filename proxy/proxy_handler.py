@@ -5,7 +5,7 @@ import socket
 from dataclasses import dataclass
 from typing import Optional, Tuple
 
-from proxy.config import ProxyConfig, UpstreamProxy
+from proxy.config import ProxyConfig
 from proxy.logging_utils import logger
 
 
@@ -113,11 +113,7 @@ class ProxyHandler:
                     f"\r\n"
                 )
             else:
-                connect_request = (
-                    f"CONNECT {host}:{port} HTTP/1.1\r\n"
-                    f"Host: {host}:{port}\r\n"
-                    f"\r\n"
-                )
+                connect_request = f"CONNECT {host}:{port} HTTP/1.1\r\nHost: {host}:{port}\r\n\r\n"
 
             server_socket.sendall(connect_request.encode())
 
@@ -188,9 +184,6 @@ class ProxyHandler:
         headers = request_data[:headers_end].decode("utf-8", errors="ignore")
         body = request_data[headers_end + 4 :] if headers_end != -1 else b""
 
-        header_lines = headers.split("\r\n")
-        host = self._extract_host(header_lines[0])
-
         logger.log_request_line(method, path, self.client_addr[0])
 
         if self.config.logging.show_request_body and body:
@@ -245,9 +238,7 @@ class ProxyHandler:
             modified_headers = self._remove_proxy_headers(headers)
             request_lines = modified_headers.split("\r\n")
 
-            has_connection_header = any(
-                h.lower().startswith("connection:") for h in request_lines
-            )
+            has_connection_header = any(h.lower().startswith("connection:") for h in request_lines)
             if not has_connection_header:
                 request_lines.append("Connection: close")
 
@@ -276,7 +267,7 @@ class ProxyHandler:
             server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
             server_socket.settimeout(self.config.threads.timeout)
-            
+
             server_socket.connect((upstream.host, upstream.port))
 
             headers_end = request_data.find(b"\r\n\r\n")
@@ -289,9 +280,7 @@ class ProxyHandler:
             url = self._get_url_from_request_line(request_lines[0], headers)
             request_lines[0] = f"{method} {url} HTTP/1.1"
 
-            has_connection_header = any(
-                h.lower().startswith("connection:") for h in request_lines
-            )
+            has_connection_header = any(h.lower().startswith("connection:") for h in request_lines)
             if not has_connection_header:
                 request_lines.append("Connection: close")
 
@@ -308,7 +297,7 @@ class ProxyHandler:
 
             full_request = "\r\n".join(request_lines).encode() + b"\r\n\r\n" + body
             server_socket.sendall(full_request)
-            
+
             self._relay_response(server_socket, upstream.host, upstream.port)
 
         except socket.timeout:
@@ -337,10 +326,7 @@ class ProxyHandler:
         result = []
         for line in headers.split("\r\n"):
             lower_line = line.lower()
-            if not any(
-                h in lower_line
-                for h in ["proxy-", "connection:", "keep-alive"]
-            ):
+            if not any(h in lower_line for h in ["proxy-", "connection:", "keep-alive"]):
                 result.append(line)
         return "\r\n".join(result)
 
@@ -369,8 +355,10 @@ class ProxyHandler:
 
                     if not headers_logged and b"\r\n\r\n" in response_data:
                         header_end = response_data.find(b"\r\n\r\n")
-                        first_line = response_data[:header_end].split(b"\r\n")[0].decode(
-                            "utf-8", errors="ignore"
+                        first_line = (
+                            response_data[:header_end]
+                            .split(b"\r\n")[0]
+                            .decode("utf-8", errors="ignore")
                         )
                         parts = first_line.split(" ")
                         if len(parts) >= 2:

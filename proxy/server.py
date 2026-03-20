@@ -29,9 +29,7 @@ class ProxyServer:
             raise
 
         self.running = True
-        logger.info(
-            f"Proxy server starting on {self.config.host}:{self.config.port}"
-        )
+        logger.info(f"Proxy server starting on {self.config.host}:{self.config.port}")
         logger.info(
             f"Max connections: {self.config.threads.max_connections}, "
             f"Timeout: {self.config.threads.timeout}s"

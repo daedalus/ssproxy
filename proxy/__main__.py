@@ -117,7 +117,7 @@ def apply_cli_overrides(config: ProxyConfig, args: argparse.Namespace) -> ProxyC
             config.upstream_proxy.host = host
             config.upstream_proxy.port = int(port)
         except ValueError:
-            print(f"Error: Invalid upstream format. Use host:port", file=sys.stderr)
+            print("Error: Invalid upstream format. Use host:port", file=sys.stderr)
             sys.exit(1)
 
     if args.plain:
@@ -134,7 +134,7 @@ def main():
 
     if not Path(args.config).exists() and args.config == "config.yaml":
         print(
-            f"Warning: config.yaml not found, using defaults",
+            "Warning: config.yaml not found, using defaults",
             file=sys.stderr,
         )
 
