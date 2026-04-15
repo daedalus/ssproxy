@@ -1,0 +1,21 @@
+host: 127.0.0.1
+port: 8080
+
+upstream_proxy:
+  enabled: false
+  host: 127.0.0.1
+  port: 8888
+  auth:
+    enabled: false
+    username: ""
+    password: ""
+
+logging:
+  enabled: true
+  colorful: true
+  show_request_body: false
+  show_response_body: false
+
+threads:
+  max_connections: 100
+  timeout: 30
